@@ -88,15 +88,15 @@ public class QuotationService {
         logger.info(">>> resp.body : " + resp.getBody());
 
         try (InputStream is = new ByteArrayInputStream(resp.getBody().getBytes())) {
-            JsonReader reader = Json.createReader(is);
-            JsonObject object = reader.readObject();
+            JsonReader r = Json.createReader(is);
+            JsonObject o = r.readObject();
             Quotation newQuote = new Quotation();
 
-            newQuote.setQuoteId(object.getString("quoteId"));
+            newQuote.setQuoteId(o.getString("quoteId"));
             logger.info(">>> quoteId : " + newQuote.getQuoteId());
 
-            if (object.containsKey("quotations")) {
-                JsonArray quotationsArray = object.getJsonArray("quotations");
+            if (o.containsKey("quotations")) {
+                JsonArray quotationsArray = o.getJsonArray("quotations");
                 for(int i = 0; i < quotationsArray.size(); i++) {
                     JsonObject item = quotationsArray.getJsonObject(i);
                     String itemName = item.getString("item");
