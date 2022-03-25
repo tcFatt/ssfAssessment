@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
@@ -26,19 +28,23 @@ import ssf.POAPP.model.Items;
 @Service
 public class QuotationService {
 
-    private static final String URL = "https://quotation.chuklee.com";
+    private static final Logger logger = LoggerFactory.getLogger(QuotationService.class);
+
+
+    private static final String URL = "https://quotation.chuklee.com/quotation";
 
     public Items createOrderItems(String payLoad) {
 
         Items newOrder = new Items();
         
-        Map<String, Integer> orderItems = new HashMap<>();
-
         try (InputStream is = new ByteArrayInputStream(payLoad.getBytes())){
             JsonReader r = Json.createReader(is);
             JsonObject o = r.readObject();
 
             newOrder.setName(o.getString("name"));
+            logger.info(">>> name : " + newOrder.getName());
+
+            Map<String, Integer> orderItems = new HashMap<>();
 
             if (o.containsKey("lineItems")) {
                 JsonArray orderArr = o.getJsonArray("lineItems");
@@ -46,25 +52,29 @@ public class QuotationService {
                     JsonObject item = orderArr.getJsonObject(i);
                     orderItems.put(item.getString("item"), item.getInt("quantity"));
                 }
+                newOrder.setOrderItems(orderItems);
+
+                logger.info(">>> orderItems:" + orderItems);
+
             }
         }   catch (IOException ex) {
                 ex.printStackTrace();
             }
          
-        newOrder.setOrderItems(orderItems);
-
         return newOrder;
     }
 
     public Optional<Quotation> getQuotations(List<String> items) {
 
         String quoteUrl = UriComponentsBuilder
-            .fromUriString(URL + "/quotation")
+            .fromUriString(URL)
             .toUriString();
 
         JsonArrayBuilder quoteItemsArr = Json.createArrayBuilder();
-            quoteItemsArr.addAll((JsonArrayBuilder) items);
-
+            for (String i : items) {
+                quoteItemsArr.add(i);
+            }
+        
         RequestEntity<String> req = RequestEntity
             .post(quoteUrl)
             .accept(MediaType.APPLICATION_JSON)
@@ -74,25 +84,35 @@ public class QuotationService {
         RestTemplate template = new RestTemplate();
 
         ResponseEntity<String> resp = template.exchange(req, String.class);
+        
+        logger.info(">>> resp.body : " + resp.getBody());
 
-        Quotation newQuote = new Quotation();
+        try (InputStream is = new ByteArrayInputStream(resp.getBody().getBytes())) {
+            JsonReader reader = Json.createReader(is);
+            JsonObject object = reader.readObject();
+            Quotation newQuote = new Quotation();
 
-        InputStream is = new ByteArrayInputStream(resp.getBody().getBytes());
-        JsonReader r = Json.createReader(is);
-        JsonObject o = r.readObject();
+            newQuote.setQuoteId(object.getString("quoteId"));
+            logger.info(">>> quoteId : " + newQuote.getQuoteId());
 
-        newQuote.setQuoteId(o.getString("quoteId"));
+            if (object.containsKey("quotations")) {
+                JsonArray quotationsArray = object.getJsonArray("quotations");
+                for(int i = 0; i < quotationsArray.size(); i++) {
+                    JsonObject item = quotationsArray.getJsonObject(i);
+                    String itemName = item.getString("item");
+                    Double unitPrice = item.getJsonNumber("unitPrice").doubleValue();
 
-        if (o.containsKey("quotations")) {
-            JsonArray quoteArr = o.getJsonArray("quotations");
-            for (int i = 0; i < quoteArr.size(); i++) {
-                JsonObject item = quoteArr.getJsonObject(i);
-                String itemName = item.getString("item");
-                Double unitPrice = Double.parseDouble(item.getString("unitPrice"));
-                newQuote.addQuotation(itemName, unitPrice.floatValue());
+                    newQuote.addQuotation(itemName, unitPrice.floatValue());
+                }
+            logger.info(">>> Quotation : " + newQuote.getQuotations());
+
+            }
+            return Optional.of(newQuote);
+
+        } catch (IOException ex) { 
+            ex.printStackTrace();
+
+            return Optional.empty();
         }
-    }
-    return Optional.empty();
-
     }
 }
