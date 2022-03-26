@@ -1,12 +1,13 @@
 package ssf.POAPP.model;
 
-import java.util.Map;
+import java.util.List;
 
 public class Items {
     private String name;
     private String item;
-    public Map<String, Integer> orderItems;
-
+    private List<String> orderItems;
+    private List<Integer> orderQuantity;
+    
     public String getName() {
         return name;
     }
@@ -20,11 +21,22 @@ public class Items {
         this.item = item;
     }
 
-    public Map<String, Integer> getOrderItems() {
-        return orderItems;
+    public List<String> getOrderItems() {
+        return this.orderItems;
     }
-    public void setOrderItems(Map<String, Integer> orderItems) {
+
+    public void setOrderItems(List<String> orderItems) {
         this.orderItems = orderItems;
     }
+    public List<Integer> getOrderQuantity() {
+        return orderQuantity;
+    }
+    public void setOrderQuantity(List<Integer> orderQuantity) {
+        this.orderQuantity = orderQuantity;
+    }
+
+
+
+
         
 }

@@ -1,6 +1,5 @@
 package ssf.POAPP.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,10 +34,9 @@ public class PurchaseOrderRestController {
         logger.info(">>> payload:" + payload);
 
         Items orderItems = quotationSvc.createOrderItems(payload);
-
-        List<String> itemOnly = new ArrayList<String>(orderItems.getOrderItems().keySet());
-
-        logger.info(">>> itemOnly:" + itemOnly);
+        
+        List<String> itemOnly = orderItems.getOrderItems();
+        List<Integer> quantityOnly = orderItems.getOrderQuantity();
 
         Optional<Quotation> orderQuotation = quotationSvc.getQuotations(itemOnly);
 
@@ -47,10 +45,10 @@ public class PurchaseOrderRestController {
             
             float totalPrice = 0.0f;
 
-            for (String i : orderItems.getOrderItems().keySet()) {
-                Float unitPrice = outOfOQuotation.getQuotation(i);
+            for (int i = 0; i < itemOnly.size(); i++) {
+                Float unitPrice = outOfOQuotation.getQuotation(itemOnly.get(i)); 
                 logger.info(">>> unitPrice:" + unitPrice);
-                Integer quantity = orderItems.getOrderItems().get(i);
+                Integer quantity = quantityOnly.get(i);
                 logger.info(">>> quantity:" + quantity);
                 totalPrice = totalPrice + (unitPrice * quantity);
                 logger.info(">>>>>> totalPrice:" + totalPrice);

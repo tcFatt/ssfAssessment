@@ -3,9 +3,8 @@ package ssf.POAPP.service;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -44,17 +43,21 @@ public class QuotationService {
             newOrder.setName(o.getString("name"));
             logger.info(">>> name : " + newOrder.getName());
 
-            Map<String, Integer> orderItems = new HashMap<>();
+            List<String> orderItems = new ArrayList<>();
+            List<Integer> orderQuantity = new ArrayList<>();
 
             if (o.containsKey("lineItems")) {
                 JsonArray orderArr = o.getJsonArray("lineItems");
                 for(int i = 0; i < orderArr.size(); i++) {
                     JsonObject item = orderArr.getJsonObject(i);
-                    orderItems.put(item.getString("item"), item.getInt("quantity"));
+                    orderItems.add(item.getString("item"));
+                    orderQuantity.add(item.getInt("quantity"));
                 }
                 newOrder.setOrderItems(orderItems);
-
+                newOrder.setOrderQuantity(orderQuantity);
+                // Map not allow 2 same key, create 2 List instead.
                 logger.info(">>> orderItems:" + orderItems);
+                logger.info(">>> orderQuantity:" + orderQuantity);
 
             }
         }   catch (IOException ex) {
